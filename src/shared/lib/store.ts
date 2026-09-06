@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { workflowReducer } from "@/entities/workflow";
+import { workflowReducer } from "@/entities/workflow/model";
 
 export const store = configureStore({
   reducer: {
