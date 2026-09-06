@@ -1,5 +1,5 @@
-import type { Node as RFNode } from "@xyflow/react";
-import { WorkflowNode } from "./types";
+import type { Node as RFNode, Edge as RFEdge } from "@xyflow/react";
+import { WorkflowEdge, WorkflowNode } from "./types";
 
 export function toReactFlowNode(
   node: WorkflowNode,
@@ -7,7 +7,7 @@ export function toReactFlowNode(
 ): RFNode {
   return {
     id: node.id,
-    type: node.type, 
+    type: node.type,
     position,
     data: {
       label: node.label,
@@ -16,4 +16,14 @@ export function toReactFlowNode(
       nodeType: node.type,
     },
   } satisfies RFNode;
+}
+
+export function toReactFlowEdge(edge: WorkflowEdge): RFEdge {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle ?? undefined,
+    targetHandle: edge.targetHandle ?? undefined,
+  };
 }
