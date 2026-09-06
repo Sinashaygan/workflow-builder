@@ -69,3 +69,20 @@ export const WorkflowNodeSchema = z.discriminatedUnion("type", [
     config: EndNodeConfigSchema,
   }),
 ]);
+
+export const WorkflowEdgeSchema = z.object({
+  id: z.string().uuid(),
+  source: z.string().uuid(),
+  target: z.string().uuid(),
+  sourceHandle: z.string().nullable().optional(),
+  targetHandle: z.string().nullable().optional(),
+});
+
+export const WorkflowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "workflow name is required"),
+  version: z.number().int().positive().default(1),
+  nodes: z.array(WorkflowNodeSchema),
+  edges: z.array(WorkflowEdgeSchema),
+  metadata: z.record(z.string() , z.unknown()).optional(),
+});
