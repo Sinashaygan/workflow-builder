@@ -27,3 +27,14 @@ export function toReactFlowEdge(edge: WorkflowEdge): RFEdge {
     targetHandle: edge.targetHandle ?? undefined,
   };
 }
+
+export function fromReactFlowNode(rfNode: RFNode): WorkflowNode {
+  const { data } = rfNode;
+  return {
+    id: rfNode.id,
+    type: data.type, 
+    label: data.label,
+    description: data.description,
+    config: data.config,
+  } as WorkflowNode;
+}
