@@ -92,6 +92,8 @@ const graphSlice = createSlice({
           node.config = EndNodeConfigSchema.parse(config);
           break;
       }
+
+      state.ui.isDirty = true;
     },
 
     addEdge: (state, action: PayloadAction<WorkflowEdge>) => {
