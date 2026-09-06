@@ -23,3 +23,7 @@ const connectionRules: Record<NodeType, NodeType[]> = {
   delay: ["action", "condition", "end"],
   end: [], 
 };
+
+export const canConnect = (sourceType:NodeType ,targetType:NodeType ):boolean=>{
+    return connectionRules[sourceType].includes(targetType) ?? false
+}
