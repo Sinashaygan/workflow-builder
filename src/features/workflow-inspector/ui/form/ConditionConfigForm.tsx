@@ -30,8 +30,11 @@ export function ConditionConfigForm({ initialConfig, onChange }: Props) {
     reset(initialConfig);
   }, [initialConfig, reset]);
 
+  const submit = handleSubmit(onChange);
   return (
-    <form onBlur={handleSubmit(onChange)} className="space-y-4">
+    <form onSubmit={submit} onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) void submit();
+    }} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="field">Field Variable</Label>
         <Input
