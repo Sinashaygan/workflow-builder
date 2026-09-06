@@ -1,5 +1,5 @@
 import type { Node as RFNode, Edge as RFEdge } from "@xyflow/react";
-import { WorkflowEdge, WorkflowNode } from "./types";
+import type { WorkflowEdge, WorkflowNode, NodeType } from "./types";
 
 export function toReactFlowNode(
   node: WorkflowNode,
@@ -32,8 +32,8 @@ export function fromReactFlowNode(rfNode: RFNode): WorkflowNode {
   const { data } = rfNode;
   return {
     id: rfNode.id,
-    type: data.type, 
-    label: data.label,
+    type: (data.nodeType ?? data.type) as NodeType,
+    label: String(data.label ?? "Untitled node"),
     description: data.description,
     config: data.config,
   } as WorkflowNode;
