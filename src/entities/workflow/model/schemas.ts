@@ -14,7 +14,10 @@ export const StartNodeConfigSchema = z.object({
 
 export const ActionNodeConfigSchema = z.object({
   actionType: z.enum(["send_email", "http_request", "notification"]),
-  endpoint: z.string().url().optional(),
+  endpoint: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().url().optional(),
+  ),
   payload: z.record(z.string(), z.unknown()).optional(),
   retryCount: z.number().int().min(0).max(5).default(0),
 });

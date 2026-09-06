@@ -92,6 +92,8 @@ const graphSlice = createSlice({
           node.config = EndNodeConfigSchema.parse(config);
           break;
       }
+
+      state.ui.isDirty = true;
     },
 
     addEdge: (state, action: PayloadAction<WorkflowEdge>) => {
@@ -132,6 +134,7 @@ const graphSlice = createSlice({
         (e) => e.source !== id && e.target !== id,
       );
       delete state.ui.nodePositions[id];
+      if (state.ui.selectedNodeId === id) state.ui.selectedNodeId = null;
       state.ui.isDirty = true;
     },
 
