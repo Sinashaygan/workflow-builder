@@ -15,7 +15,7 @@ export const StartNodeConfigSchema = z.object({
 export const ActionNodeConfigSchema = z.object({
   actionType: z.enum(["send_email", "http_request", "notification"]),
   endpoint: z.string().url().optional(),
-  payload: z.record(z.string() , z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
   retryCount: z.number().int().min(0).max(5).default(0),
 });
 
@@ -40,3 +40,32 @@ export const EndNodeConfigSchema = z.object({
   status: z.enum(["success", "failed", "terminated"]).default("success"),
   message: z.string().optional(),
 });
+
+const BaseNodeSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string().min(1, "Node name is required"),
+  description: z.string().optional(),
+});
+
+export const WorkflowNodeSchema = z.discriminatedUnion("type", [
+  BaseNodeSchema.extend({
+    type: z.literal(NodeTypeSchema.enum.start),
+    config: StartNodeConfigSchema,
+  }),
+  BaseNodeSchema.extend({
+    type: z.literal(NodeTypeSchema.enum.action),
+    config: ActionNodeConfigSchema,
+  }),
+  BaseNodeSchema.extend({
+    type: z.literal(NodeTypeSchema.enum.condition),
+    config: ConditionNodeConfigSchema,
+  }),
+  BaseNodeSchema.extend({
+    type: z.literal(NodeTypeSchema.enum.delay),
+    config: DelayNodeConfigSchema,
+  }),
+  BaseNodeSchema.extend({
+    type: z.literal(NodeTypeSchema.enum.end),
+    config: EndNodeConfigSchema,
+  }),
+]);
