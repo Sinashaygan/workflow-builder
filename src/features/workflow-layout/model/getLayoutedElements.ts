@@ -31,4 +31,19 @@ export function getLayoutedElements(
   });
 
   dagre.layout(dagreGraph);
+
+  const positions: Record<string, { x: number; y: number }> = {};
+
+  nodes.forEach((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    if (nodeWithPosition) {
+      positions[node.id] = {
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT / 2,
+      };
+    }
+  });
+
+  return positions;
+
 }
