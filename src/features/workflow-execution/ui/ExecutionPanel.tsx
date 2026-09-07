@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useCallback, useRef, useState } from "react";
 import { Play, RefreshCcw, StepForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,20 +27,20 @@ export function ExecutionPanel() {
   const dispatch = useAppDispatch();
   const { workflow } = useAppSelector((state) => state.workflow);
   const execution = useAppSelector((state) => state.execution);
-  const runnerRef = React.useRef<StepRunner | null>(null);
-  const activeNodeRef = React.useRef<{
+  const runnerRef = useRef<StepRunner | null>(null);
+  const activeNodeRef = useRef<{
     id: string;
     startedAt: number;
   } | null>(null);
-  const [hasRunner, setHasRunner] = React.useState(false);
+  const [hasRunner, setHasRunner] = useState(false);
 
-  const finishRunner = React.useCallback(() => {
+  const finishRunner = useCallback(() => {
     runnerRef.current = null;
     activeNodeRef.current = null;
     setHasRunner(false);
   }, []);
 
-  const stepExecution = React.useCallback(
+  const stepExecution = useCallback(
     (runnerOverride?: StepRunner) => {
       const activeRunner = runnerOverride ?? runnerRef.current;
       if (!activeRunner) {
