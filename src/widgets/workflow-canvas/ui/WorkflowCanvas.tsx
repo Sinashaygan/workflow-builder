@@ -11,6 +11,7 @@ import {
   type Connection,
   applyNodeChanges,
   applyEdgeChanges,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { workflowNodeTypes } from "@/entities/workflow/ui/nodeTypes";
@@ -24,12 +25,42 @@ import {
   removeNode,
   updateNodePosition,
   selectNode,
+  NodeType,
+  addNode,
 } from "@/entities/workflow/model";
 import { useAppDispatch, useAppSelector } from "@/shared/lib/hooks";
+import { createDefaultNode } from "@/features/workflow-toolbar/utils/creat-default-nodes";
 
 export function WorkflowCanvas() {
   const dispatch = useAppDispatch();
   const { workflow, ui } = useAppSelector((state) => state.workflow);
+  const {screenToFlowPosition} = useReactFlow()
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData(
+        "application/reactflow-nodetype",
+      ) as NodeType;
+
+      if (!type) return;
+      
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const payload = createDefaultNode(type, position);
+      dispatch(addNode(payload));
+    },
+    [dispatch, screenToFlowPosition],
+  );
 
   // تبدیل داده‌های Domain به نودها و یال‌های React Flow
   const nodes = useMemo(() => {
