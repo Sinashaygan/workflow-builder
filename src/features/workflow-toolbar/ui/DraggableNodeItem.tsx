@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { type LucideIcon } from "lucide-react";
 import type { NodeType } from "@/entities/workflow/model";
 
