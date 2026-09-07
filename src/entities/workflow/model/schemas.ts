@@ -79,6 +79,7 @@ export const WorkflowEdgeSchema = z.object({
   target: z.string().uuid(),
   sourceHandle: z.string().nullable().optional(),
   targetHandle: z.string().nullable().optional(),
+  branch: z.enum(["true", "false"]).optional(),
 });
 
 export const WorkflowSchema = z.object({
