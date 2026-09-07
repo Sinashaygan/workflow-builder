@@ -7,6 +7,7 @@ import {
   EndNodeConfigSchema,
   StartNodeConfigSchema,
 } from "./schemas";
+import { connectionRules } from "@/shared/lib/connections";
 
 const initialState: WorkflowState = {
   workflow: {
@@ -24,13 +25,6 @@ const initialState: WorkflowState = {
   },
 };
 
-const connectionRules: Record<NodeType, NodeType[]> = {
-  start: ["action", "condition", "delay", "end"],
-  action: ["action", "condition", "delay", "end"],
-  condition: ["condition", "delay", "end", "action"],
-  delay: ["action", "condition", "end"],
-  end: [],
-};
 
 export const canConnect = (
   sourceType: NodeType,
