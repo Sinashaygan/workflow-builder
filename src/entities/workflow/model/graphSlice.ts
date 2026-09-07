@@ -43,10 +43,16 @@ const graphSlice = createSlice({
   name: "workflow",
   initialState,
   reducers: {
-    addNode: (state, action: PayloadAction<WorkflowNode>) => {
-      const node = action.payload;
+    addNode: (
+      state,
+      action: PayloadAction<{
+        node: WorkflowNode;
+        position: { x: number; y: number };
+      }>,
+    ) => {
+      const node = action.payload.node;
       state.workflow.nodes.push(node);
-      state.ui.nodePositions[node.id] = { x: 0, y: 0 };
+      state.ui.nodePositions[node.id] = action.payload.position;
       state.ui.isDirty = true;
       state.ui.selectedNodeId = node.id;
     },
@@ -94,6 +100,17 @@ const graphSlice = createSlice({
       }
 
       state.ui.isDirty = true;
+    },
+
+    setLayoutPositions: (
+      state,
+      action: PayloadAction<Record<string, { x: number; y: number }>>,
+    ) => {
+      // به‌روزرسانی یکباره پوزیشن تمام نودها
+      state.ui.nodePositions = {
+        ...state.ui.nodePositions,
+        ...action.payload,
+      };
     },
 
     addEdge: (state, action: PayloadAction<WorkflowEdge>) => {
