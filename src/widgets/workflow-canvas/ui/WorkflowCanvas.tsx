@@ -123,7 +123,7 @@ export function WorkflowCanvas() {
   );
 
   return (
-    <div className="w-full h-full bg-background relative">
+    <div className="w-full h-full bg-background relative" onDragOver={onDragOver} onDrop={onDrop}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
