@@ -20,3 +20,13 @@ export type NodeExecutionStatus =
   | "skipped"
   | "error"
   | "active";
+
+export type IssueSeverity = "error" | "warning";
+
+export interface GraphIssue {
+  severity: IssueSeverity;
+  message: string;
+  nodeId?: string;
+  edgeId?: string;
+}
+
