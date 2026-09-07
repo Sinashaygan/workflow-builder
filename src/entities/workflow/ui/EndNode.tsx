@@ -6,11 +6,12 @@ import { Square } from "lucide-react";
 import { BaseNode } from "./BaseNode";
 import type { EndNodeConfig } from "../model";
 
-export function EndNode({ data, selected }: NodeProps) {
+export function EndNode({ id, data, selected }: NodeProps) {
   const config = data.config as EndNodeConfig;
 
   return (
     <BaseNode
+      nodeId={id}
       title={(data.label as string) || "End"}
       icon={<Square className="w-3.5 h-3.5 text-rose-500" />}
       badge="Terminal"

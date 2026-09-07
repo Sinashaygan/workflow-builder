@@ -5,11 +5,12 @@ import { GitBranch } from "lucide-react";
 import { BaseNode } from "./BaseNode";
 import type { ConditionNodeConfig } from "../model";
 
-export function ConditionNode({ data, selected }: NodeProps) {
+export function ConditionNode({ id, data, selected }: NodeProps) {
   const config = data.config as ConditionNodeConfig;
 
   return (
     <BaseNode
+      nodeId={id}
       title={(data.label as string) || "Condition"}
       icon={<GitBranch className="w-3.5 h-3.5 text-amber-500" />}
       badge="Branch"

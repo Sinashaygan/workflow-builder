@@ -5,11 +5,12 @@ import { Clock } from "lucide-react";
 import { BaseNode } from "./BaseNode";
 import type { DelayNodeConfig } from "../model";
 
-export function DelayNode({ data, selected }: NodeProps) {
+export function DelayNode({ id, data, selected }: NodeProps) {
   const config = data.config as DelayNodeConfig;
 
   return (
     <BaseNode
+      nodeId={id}
       title={(data.label as string) || "Delay"}
       icon={<Clock className="w-3.5 h-3.5 text-purple-500" />}
       badge="Delay"
