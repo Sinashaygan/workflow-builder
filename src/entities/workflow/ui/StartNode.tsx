@@ -3,11 +3,12 @@ import { StartNodeConfig } from "../model";
 import { BaseNode } from "./BaseNode";
 import { Play } from "lucide-react";
 
-export function StartNode({ data, selected }: NodeProps) {
+export function StartNode({ id, data, selected }: NodeProps) {
   const config = data.config as StartNodeConfig;
 
   return (
     <BaseNode
+      nodeId={id}
       title={(data.label as string) || "Start Trigger"}
       icon={<Play className="w-3.5 h-3.5 text-emerald-500" />}
       badge="Start"

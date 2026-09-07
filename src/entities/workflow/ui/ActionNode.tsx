@@ -5,11 +5,12 @@ import { Zap } from "lucide-react";
 import { BaseNode } from "./BaseNode";
 import type { ActionNodeConfig } from "../model";
 
-export function ActionNode({ data, selected }: NodeProps) {
+export function ActionNode({ id, data, selected }: NodeProps) {
   const config = data.config as ActionNodeConfig;
 
   return (
     <BaseNode
+      nodeId={id}
       title={(data.label as string) || "Action"}
       icon={<Zap className="w-3.5 h-3.5 text-blue-500" />}
       badge="Action"
