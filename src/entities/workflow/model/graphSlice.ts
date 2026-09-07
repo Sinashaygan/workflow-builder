@@ -169,6 +169,7 @@ export const {
   updateNodePosition,
   updateNodeConfig,
   selectNode,
+  setLayoutPositions
 } = graphSlice.actions;
 
 export const workflowReducer = graphSlice.reducer
