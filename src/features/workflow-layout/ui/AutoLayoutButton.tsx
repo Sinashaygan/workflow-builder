@@ -36,16 +36,18 @@ export function AutoLayoutButton() {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleAutoLayout}
-            className="h-9 w-9 bg-background/95 backdrop-blur shadow-md"
-          >
-            <Network className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleAutoLayout}
+              className="h-9 w-9 bg-background/95 backdrop-blur shadow-md"
+            >
+              <Network className="h-4 w-4" />
+            </Button>
+          }
+        />
         <TooltipContent side="bottom">
           <p>Auto Layout (Dagre)</p>
         </TooltipContent>
