@@ -1,3 +1,4 @@
+"use client"
 import { useAppSelector } from "@/shared/lib/hooks";
 import { ExecutionStatus } from "../model/types";
 
