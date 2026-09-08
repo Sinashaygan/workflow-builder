@@ -22,7 +22,11 @@ export type ExecutionStep =
       branch: "true" | "false" | "fallthrough";
     }
   | { kind: "execute_action"; node: NodeOfType<"action"> }
-  | { kind: "execute_delay"; node: NodeOfType<"delay">; ms: number }
+  | {
+      kind: "execute_delay";
+      node: NodeOfType<"delay">;
+      durationMs: number;
+    }
   | { kind: "reach_end"; node: NodeOfType<"end"> }
   | { kind: "finished" }
   | { kind: "failed"; nodeId?: string; reason: string };
@@ -120,7 +124,10 @@ export function* createStepRunner(
         yield {
           kind: "execute_delay",
           node: currentNode,
-          ms: currentNode.config.durationMs,
+          durationMs: toMilliseconds(
+            currentNode.config.durationMs,
+            currentNode.config.unit,
+          ),
         };
         nextEdge = getSingleOutgoingEdge(context, currentNode.id);
         break;
@@ -169,6 +176,20 @@ export function* createStepRunner(
   }
 
   yield { kind: "finished" };
+}
+
+function toMilliseconds(
+  duration: number,
+  unit: NodeOfType<"delay">["config"]["unit"],
+): number {
+  switch (unit) {
+    case "seconds":
+      return duration * 1_000;
+    case "minutes":
+      return duration * 60_000;
+    case "hours":
+      return duration * 3_600_000;
+  }
 }
 
 function getSingleOutgoingEdge(
