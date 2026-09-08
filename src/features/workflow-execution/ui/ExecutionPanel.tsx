@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Play, RefreshCcw, StepForward } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Play, RefreshCcw, Square, StepForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   appendLog,
@@ -23,37 +23,63 @@ import { validateWorkflowGraph } from "../model/validateGraph";
 
 type StepRunner = Generator<ExecutionStep, void, void>;
 
+const STEP_PAUSE_MS = 350;
+
+function isTerminalStep(step: ExecutionStep) {
+  return ["reach_end", "finished", "failed"].includes(step.kind);
+}
+
 export function ExecutionPanel() {
   const dispatch = useAppDispatch();
   const { workflow } = useAppSelector((state) => state.workflow);
-  const execution = useAppSelector((state) => state.execution);
   const runnerRef = useRef<StepRunner | null>(null);
   const activeNodeRef = useRef<{
     id: string;
     startedAt: number;
   } | null>(null);
-  const [hasRunner, setHasRunner] = useState(false);
+  const isRunningRef = useRef(false);
+  const cancelRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pauseResolveRef = useRef<(() => void) | null>(null);
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
+
+  const cancelPendingPause = useCallback(() => {
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = null;
+    }
+
+    const resolvePause = pauseResolveRef.current;
+    pauseResolveRef.current = null;
+    resolvePause?.();
+  }, []);
+
+  const waitForPause = useCallback(
+    (durationMs: number) =>
+      new Promise<void>((resolve) => {
+        if (cancelRef.current) {
+          resolve();
+          return;
+        }
+
+        pauseResolveRef.current = resolve;
+        pauseTimerRef.current = setTimeout(() => {
+          pauseTimerRef.current = null;
+          pauseResolveRef.current = null;
+          resolve();
+        }, durationMs);
+      }),
+    [],
+  );
 
   const finishRunner = useCallback(() => {
     runnerRef.current = null;
     activeNodeRef.current = null;
-    setHasRunner(false);
   }, []);
 
-  const stepExecution = useCallback(
-    (runnerOverride?: StepRunner) => {
-      const activeRunner = runnerOverride ?? runnerRef.current;
-      if (!activeRunner) {
-        return;
-      }
-
-      const result = activeRunner.next();
-      if (result.done) {
-        finishRunner();
-        return;
-      }
-
-      const step = result.value;
+  const handleStepAction = useCallback(
+    (step: ExecutionStep) => {
       switch (step.kind) {
         case "enter_node": {
           const now = Date.now();
@@ -90,7 +116,7 @@ export function ExecutionPanel() {
             appendLog({
               entry: {
                 type: "info",
-                message: `Waiting ${step.ms}ms on "${step.node.label}"`,
+                message: `Waiting ${step.durationMs}ms on "${step.node.label}"`,
                 nodeId: step.node.id,
                 timestamp: Date.now(),
               },
@@ -178,7 +204,66 @@ export function ExecutionPanel() {
     [dispatch, finishRunner],
   );
 
-  const handleRun = () => {
+  const runAllSteps = useCallback(
+    async (runner: StepRunner) => {
+      if (isRunningRef.current) {
+        return;
+      }
+
+      isRunningRef.current = true;
+      cancelRef.current = false;
+      setIsAutoRunning(true);
+
+      try {
+        let result = runner.next();
+
+        while (!result.done) {
+          if (cancelRef.current) {
+            break;
+          }
+
+          const step = result.value;
+          handleStepAction(step);
+
+          if (isTerminalStep(step)) {
+            break;
+          }
+
+          await waitForPause(
+            step.kind === "execute_delay"
+              ? step.durationMs
+              : STEP_PAUSE_MS,
+          );
+
+          if (!cancelRef.current) {
+            result = runner.next();
+          }
+        }
+      } finally {
+        isRunningRef.current = false;
+        finishRunner();
+        if (isMountedRef.current) {
+          setIsAutoRunning(false);
+        }
+      }
+    },
+    [finishRunner, handleStepAction, waitForPause],
+  );
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      cancelRef.current = true;
+      isRunningRef.current = false;
+      runnerRef.current = null;
+      activeNodeRef.current = null;
+      cancelPendingPause();
+    };
+  }, [cancelPendingPause]);
+
+  const initializeExecution = useCallback((): StepRunner | null => {
     const validation = validateWorkflowGraph(workflow.nodes, workflow.edges);
 
     dispatch(prepareExecution());
@@ -200,20 +285,19 @@ export function ExecutionPanel() {
         });
       dispatch(updateStatus({ status: "failed" }));
       finishRunner();
-      return;
+      return null;
     }
 
     const rootNode = workflow.nodes.find((node) => node.type === "start");
     if (!rootNode) {
       dispatch(updateStatus({ status: "failed" }));
       finishRunner();
-      return;
+      return null;
     }
 
     const context = buildExecutionContext(workflow.nodes, workflow.edges);
     const newRunner = createStepRunner(context);
     runnerRef.current = newRunner;
-    setHasRunner(true);
 
     dispatch(
       startExecution({
@@ -222,10 +306,49 @@ export function ExecutionPanel() {
       }),
     );
 
-    stepExecution(newRunner);
+    return newRunner;
+  }, [dispatch, finishRunner, workflow.edges, workflow.nodes]);
+
+  const handleRun = () => {
+    if (isRunningRef.current) {
+      return;
+    }
+
+    const activeRunner = runnerRef.current ?? initializeExecution();
+    if (activeRunner) {
+      void runAllSteps(activeRunner);
+    }
   };
 
-  const handleReset = () => {
+  const handleStep = () => {
+    if (isRunningRef.current) {
+      return;
+    }
+
+    const activeRunner = runnerRef.current ?? initializeExecution();
+    if (!activeRunner) {
+      return;
+    }
+
+    const result = activeRunner.next();
+    if (result.done) {
+      finishRunner();
+      return;
+    }
+
+    handleStepAction(result.value);
+  };
+
+  const handleStopOrReset = () => {
+    cancelRef.current = true;
+    cancelPendingPause();
+
+    if (isRunningRef.current) {
+      finishRunner();
+      dispatch(updateStatus({ status: "stopped" }));
+      return;
+    }
+
     finishRunner();
     dispatch(clearExecution());
   };
@@ -237,7 +360,7 @@ export function ExecutionPanel() {
         variant="outline"
         onClick={handleRun}
         className="h-8 w-8"
-        disabled={workflow.nodes.length === 0 || execution.status === "running"}
+        disabled={workflow.nodes.length === 0 || isAutoRunning}
         aria-label="Start workflow execution"
       >
         <Play className="h-4 w-4" />
@@ -245,9 +368,9 @@ export function ExecutionPanel() {
       <Button
         size="icon"
         variant="outline"
-        onClick={() => stepExecution()}
+        onClick={handleStep}
         className="h-8 w-8"
-        disabled={!hasRunner || execution.status !== "running"}
+        disabled={workflow.nodes.length === 0 || isAutoRunning}
         aria-label="Execute next workflow step"
       >
         <StepForward className="h-4 w-4" />
@@ -255,11 +378,17 @@ export function ExecutionPanel() {
       <Button
         size="icon"
         variant="outline"
-        onClick={handleReset}
+        onClick={handleStopOrReset}
         className="h-8 w-8"
-        aria-label="Reset workflow execution"
+        aria-label={
+          isAutoRunning ? "Stop workflow execution" : "Reset workflow execution"
+        }
       >
-        <RefreshCcw className="h-4 w-4" />
+        {isAutoRunning ? (
+          <Square className="h-4 w-4" />
+        ) : (
+          <RefreshCcw className="h-4 w-4" />
+        )}
       </Button>
     </div>
   );
